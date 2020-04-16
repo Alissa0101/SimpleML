@@ -1,14 +1,9 @@
 import numpy as np
 import math
 class model():
-    def __init__(self, input_size=None, output_size=None, input_activation=None, output_activation=None):
+    def __init__(self):
         #super(model, self).__init__()
-        if(input_size==None or output_size==None): raise ValueError("Either input_size or output_size are not defined")
         self.layers = []
-        self.input_size = input_size
-        self.output_size = output_size
-        self.add_layer(layers.fully_connected(shape=input_size, name="Input", activation=input_activation))
-        self.output_activation = np.vectorize(output_activation)
         #print(input_size, output_size)
         
     def add_layer(self, layer):
@@ -17,12 +12,14 @@ class model():
         self.layers.append(layer)
 
     def compile(self):
-        self.add_layer(layers.fully_connected(shape=self.output_size, name="Output"))
         for layerIndex in range(0, len(self.layers)-1):
             layer = self.layers[layerIndex]
             nextLayer = self.layers[layerIndex+1]
             weightShape = np.concatenate((np.asarray(layer.shape), np.asarray(nextLayer.shape)))
             layer.weights = np.full(weightShape, 0.5)
+            layer.bias = np.full(nextLayer.shape, -1)
+
+        self.layers[-1].bias = np.full(self.layers[-1].shape, -1)
 
     def display(self):
         print("\n\n")
@@ -32,33 +29,53 @@ class model():
             print(layer.name + "  -=-  " + str(layer.shape) + "  -=-  " + str(weightsAmount))
         print("\n\n")
 
-    def train(self, input=None, target=None, epochs=None):
+    def train(self, input=None, target=None, epochs=None, loss_function=None):
+        if(loss_function == None): raise ValueError("Invalid loss_function: " + str(loss_function))
         for epoch in range(1, epochs+1):
-            for inputs in input:
-                result = self.step(inputs)
-                print(result)
+            for inputs, targets in zip(input, target):
+                prediction = self.step_forward(inputs)
+                lossValue = loss_function(self, targets, prediction)
+                self.step_backward(targets, prediction)
+                print(targets, prediction)
 
-    def step(self, inputs):
+    def step_forward(self, inputs):
         currentValues = inputs
 
         for layerIndex in range(0, len(self.layers)-1):
             layer = self.layers[layerIndex]
-            layer.neurons = layer.activation(self, currentValues)
-            currentValues = np.dot(layer.neurons, layer.weights)
+            layer.neurons = currentValues
+            currentValues = layer.activation(self, np.dot(layer.neurons, layer.weights) + layer.bias)
 
-        
-        return self.output_activation(self, currentValues)
+        lastLayer = self.layers[-1]
+        print(lastLayer.use_bias)
+        if(lastLayer.use_bias == False): return lastLayer.activation(self, currentValues)
+        if(lastLayer.use_bias == True): return lastLayer.activation(self, currentValues+lastLayer.bias)
 
+    def step_backward(self, actual, prediction):
+        weightChanges = []
+        previousLayerNeurons = actual
+        for layerIndex in range(0, len(self.layers)):
+            index = (len(self.layers)-1) - layerIndex
+            layer = self.layers[index]
+            print(layer.name)
+            neurons = layer.neurons
+            if(index == len(self.layers)-1):
+                print("at output")
+            print(previousLayerNeurons, neurons)
+            np.dot(previousLayerNeurons, neurons)
+            previousLayerNeurons = neurons
 
 class _layer():
-    def __init__(self, shape=0, name=None, activation=None):
+    def __init__(self, shape=0, name=None, activation=None, use_bias=False):
         #if(not isinstance(shape, )): raise ValueError("Invalid value for shape: " + str(shape))
         self.shape = np.array(shape)
         self.name = name
         self.weights = np.array([])
+        self.bias = np.array([])
         self.neurons = np.full(shape, 1)
-        if(activation == None): activation = np.vectorize(activations.none)
-        self.activation = np.vectorize(activation)
+        if(activation == None): activation = activations.none
+        self.activation = activation
+        self.use_bias = use_bias
 
     
 
@@ -78,3 +95,10 @@ class activations:
         return expo/expo_sum
     def none(self, x):
         return x
+    def sigmoid_dev(self, x):
+        return x * (1 - x)
+
+class loss:
+    def mean_squared_error(self, actual, predicted):
+        mse = (np.square(actual - predicted)).mean(axis=None)
+        return mse
