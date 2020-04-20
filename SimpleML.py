@@ -2,7 +2,7 @@ import numpy as np
 import math
 class model():
     def __init__(self):
-        #p.random.seed(1)
+        np.random.seed(1)
         #super(model, self).__init__()
         self.layers = []
         #print(input_size, output_size)
@@ -33,19 +33,27 @@ class model():
 
     def train(self, input=None, target=None, epochs=None, loss_function=None, learn_rate=0.00001):
         if(loss_function == None): raise ValueError("Invalid loss_function: " + str(loss_function))
+        lossHistory = []
+        accuracyHistory = []
         for epoch in range(1, epochs+1):
             weight_changes = []
             bias_changes = []
             lossValue = 0
+            accuracyValue = 0
             for inputs, targets in zip(input, target):
                 prediction = self.predict(inputs)
                 lossValue += loss_function(self, targets, prediction)
+                accuracyValue +=  1 - np.sum(targets-prediction)
+                print(targets, prediction)
                 wc, bc = self.step_backward(targets, prediction, learn_rate)
                 weight_changes.append(wc)
                 bias_changes.append(bc)
                 #self._applyChanges(wc, bc)
-                print(epoch,"/",epochs, prediction, "Loss:", lossValue/len(input))
+            lossHistory.append(lossValue/len(input))
+            accuracyHistory.append(accuracyValue/len(input))
+            print(epoch,"/",epochs, "Loss:", lossValue/len(input), "Accracy:", accuracyValue/len(input))
             self._applyChanges(np.average(weight_changes, axis=0), np.average(bias_changes, axis=0))
+        return lossHistory, accuracyHistory
 
     def predict(self, inputs):
         currentValues = inputs
@@ -75,7 +83,7 @@ class model():
             layer = self.layers[index]
             nextLayer = self.layers[index-1]
             #print(layer.name, " --> ", nextLayer.name)
-            accuracy = activations.sigmoid(self, nextLayersTarget - layer.neurons, deriv=True)
+            accuracy = layer.activation(self,nextLayersTarget - layer.neurons, deriv=True)
             #print(accuracy)
             weightAccuracy = nextLayer.weights * accuracy
             #print(weightAccuracy)
