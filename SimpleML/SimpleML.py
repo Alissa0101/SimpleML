@@ -20,9 +20,9 @@ class model():
             weightShape = np.concatenate((np.asarray(layer.shape), np.asarray(nextLayer.shape)))
             #layer.weights = np.full(weightShape, 0.5)
             layer.weights = np.full(weightShape, 1,dtype='float32')#np.random.random_sample(weightShape)
-            layer.bias = np.full(nextLayer.shape, -1,dtype='float32')#np.random.random_sample(nextLayer.shape)
+            layer.bias = np.full(nextLayer.shape, 1,dtype='float32')#np.random.random_sample(nextLayer.shape)
 
-        self.layers[-1].bias = np.full(self.layers[-1].shape, -1,dtype='float32')
+        self.layers[-1].bias = np.full(self.layers[-1].shape, 1,dtype='float32')
 
     def display(self):
         print("\n\n")
