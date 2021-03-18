@@ -9,5 +9,5 @@ setup(
     install_requires=['numpy'],
     version='0.0.1',
     license='MIT',
-    description='https://github.com/itzbradmc/SimpleML',
+    description='https://github.com/Alissa0101/SimpleML',
 )
