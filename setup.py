@@ -2,7 +2,7 @@ from setuptools import setup
 
 setup(
     name='SimpleML',
-    url='https://github.com/itzbradmc/SimpleML',
+    url='https://github.com/Alissa0101/SimpleML',
     author='Alissa Wilson',
     author_email='None atm',
     packages=['SimpleML'],
